@@ -1,3 +1,7 @@
+import random
+
+from simulator.rider import Rider
+
 class Evolver(object):
   def __init__(self, elevators, controller):
     self.elevators = elevators
@@ -5,15 +9,14 @@ class Evolver(object):
 
   def evolve(self):
     while True:
-      # TODO
-      # Generate random guests.
-      # Ask controller which elevator should commit.
-      # Control elevator.
-      # Go to next step
+      # Pause for testing.
       input('')
 
-      cur_state = self.elevators.cur_state()
-      picked = self.controller.PickElevator(cur_state)
-      self.elevators.commit(picked, rider.dest)
+      # Floor 1 to 6.
+      rider = Rider(1, random.choice(range(1, 7)))
+
+      state = self.elevators.state()
+      picked = self.controller.Pick(state, rider)
+      self.elevators.commit(picked, rider)
 
       print(self.elevators)

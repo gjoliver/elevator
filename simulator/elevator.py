@@ -12,25 +12,25 @@ class S(Enum):
 
 class Elevator(object):
   def __init__(self):
-    self.state = S.STOP
+    self.running = S.STOP
     self.floor = 1
-    self.riders = [Rider(3)]
+    self.riders = [Rider(1, 3)]
     self.stops = []
 
-  def commit(floor):
+  def commit(self, rider):
     # TODO, kinda complicated.
     pass
 
-  def cur_state(self):
+  def state(self):
     return {
-      'state': self.state,
+      'running': self.running,
       'floor': self.floor,
       'riders': self.riders,
       'stops': self.stops,
     }
 
   def __str__(self):
-    s = self.cur_state()
+    s = self.state()
     # Turn rider list into readable string.
     s['riders'] = [str(r) for r in s['riders']]
     return str(s)
@@ -40,11 +40,11 @@ class Elevators(object):
   def __init__(self, num_of_elevators):
     self.elevators = [Elevator() for _ in range(num_of_elevators)]
 
-  def cur_state(self):
-    return [e.cur_state() for e in self.elevators]
+  def state(self):
+    return [e.state() for e in self.elevators]
 
-  def commit(self, idx, floor):
-    self.elevators[idx].commit(floor)
+  def commit(self, idx, rider):
+    self.elevators[idx].commit(rider)
 
   def __str__(self):
     return '\n'.join([str(e) for e in self.elevators])

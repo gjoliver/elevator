@@ -4,5 +4,6 @@ class RandomAssigner(object):
   def __init__(self):
     pass
 
-  def PickElevator(self, cur_state):
-    return random.choice(len(cur_state))
+  def Pick(self, state, rider):
+    del rider  # not used.
+    return random.choice(range(len(state)))

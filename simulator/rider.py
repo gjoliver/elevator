@@ -1,6 +1,7 @@
 class Rider(object):
-  def __init__(self, dest):
+  def __init__(self, start, dest):
+    self.start = start
     self.dest = dest
 
   def __str__(self):
-    return 'd%d' % self.dest
+    return f'{self.start}->{self.dest}'
