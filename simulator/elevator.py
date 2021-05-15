@@ -13,12 +13,21 @@ class S(Enum):
 class Elevator(object):
   def __init__(self):
     self.running = S.STOP
-    self.floor = 1
-    self.riders = [Rider(1, 3)]
-    self.stops = []
+    self.floor = 0
+    self.riders = []
+    # Committed stops to stop
+    self.stops = [False for _ in range(NUM_FLOORS)]
 
   def commit(self, rider):
-    # TODO, kinda complicated.
+    # Commit to pick up the rider.
+    self.stops[rider.start] = True
+    if self.running == S.STOP:
+      self.running = S.DOWN if rider.start <= self.floor else S.UP
+    else:
+      # Keep current running direction.
+      pass
+
+  def step(self):
     pass
 
   def state(self):

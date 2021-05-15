@@ -1,5 +1,6 @@
 import random
 
+from simulator.elevator import NUM_FLOORS
 from simulator.rider import Rider
 
 class Evolver(object):
@@ -13,7 +14,7 @@ class Evolver(object):
       input('')
 
       # Floor 1 to 6.
-      rider = Rider(1, random.choice(range(1, 7)))
+      rider = Rider(0, random.choice(range(1, NUM_FLOORS)))
 
       state = self.elevators.state()
       picked = self.controller.Pick(state, rider)
