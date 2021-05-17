@@ -6,10 +6,8 @@ def sim():
   elevators = Elevators(4)
   controller = RandomAssigner()
 
-  e = Evolver(elevators, controller)
+  e = Evolver(elevators, controller, horizon=1000)
   e.evolve()
-
-  # TODO Report stats.
 
 
 if __name__ == '__main__':
