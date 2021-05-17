@@ -1,4 +1,4 @@
-# elevator
+# A destination dispatch elevator simulator
 
 ## To run unit test
 
