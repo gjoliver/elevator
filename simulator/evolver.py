@@ -16,8 +16,9 @@ class Evolver(object):
       # Floor 1 to 6.
       rider = Rider(0, random.choice(range(1, NUM_FLOORS)))
 
-      state = self.elevators.state()
-      picked = self.controller.Pick(state, rider)
+      picked = self.controller.Pick(self.elevators.state(), rider)
       self.elevators.commit(picked, rider)
+
+      self.elevators.step()
 
       print(self.elevators)

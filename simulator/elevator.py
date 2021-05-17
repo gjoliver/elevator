@@ -52,6 +52,8 @@ class Elevator(object):
     new_riders = new_riders + self.waiting[self.floor]
     # Clear waiting queue at current floor.
     self.waiting[self.floor] = []
+    # new_riders are the update list of riders.
+    self.riders = new_riders
 
   def _update_stops(self):
     new_stops = []
@@ -63,6 +65,9 @@ class Elevator(object):
         # stop to visit.
         new_stops.append((s[1],))
       # else, just drop this dropoff stop that has just been satisfied.
+    # Set new stops and consolidate.
+    self.stops = new_stops
+    self._consolidate_stops()
 
   def _go(self):
     # Travel to next floor.
@@ -100,34 +105,41 @@ class Elevator(object):
         above = stop[0]
     return above
 
-  def _next_running(self):
+  def _update_running(self):
     if self.running == S.DOWN:
       # Lower stops have priority.
       if self._next_stop_below() >= 0:
-        return S.DOWN
+        self.running = S.DOWN
+        return
       elif self._next_stop_above() >= 0:
-        return S.UP
+        self.running = S.UP
+        return
     elif self.running == S.UP:
       # Higher stops have priority.
       if self._next_stop_above() >= 0:
-        return S.UP
+        self.running = S.UP
+        return
       elif self._next_stop_below() >= 0:
-        return S.DOWN
+        self.running = S.DOWN
+        return
     elif self.running == S.STOP:
       # Go to whichever stop is closer.
       stop_below = self._next_stop_below()
       stop_above = self._next_stop_above()
       if stop_below >= 0 and stop_above < 0:
-        return S.DOWN
+        self.running = S.DOWN
+        return
       elif stop_below < 0 and stop_above >= 0:
-        return S.UP
+        self.running = S.UP
+        return
       elif stop_below >= 0 and stop_above >= 0:
-        return (
+        self.running = (
           S.DOWN
           if abs(stop_below - self.floor) <= abs(stop_above - self.floor)
           else S.UP)
+        return
     # Otherwise, rest at current floor.
-    return S.STOP
+    self.running = S.STOP
 
   def step(self):
     self._go()
