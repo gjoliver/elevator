@@ -140,6 +140,7 @@ class Elevator(object):
       'running': self.running,
       'floor': self.floor,
       'riders': self.riders,
+      'waiting': self.waiting,
       'stops': self.stops,
     }
 
@@ -147,6 +148,7 @@ class Elevator(object):
     s = self.state()
     # Turn rider list into readable string.
     s['riders'] = [str(r) for r in s['riders']]
+    s['waiting'] = [[str(r) for r in w] for w in s['waiting']]
     return str(s)
 
 
