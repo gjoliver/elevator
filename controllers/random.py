@@ -1,7 +1,8 @@
 import random
 
 class RandomAssigner(object):
-  def __init__(self):
+  def __init__(self, cfg):
+    del cfg  # not used
     pass
 
   def Pick(self, state, rider):

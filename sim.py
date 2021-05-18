@@ -1,13 +1,21 @@
+from controllers.dedicated import DedicatedAssigner
 from controllers.rr import RoundRobinAssigner
 from controllers.random import RandomAssigner
 from simulator.elevator import Elevators
 from simulator.evolver import Evolver
 
 def sim():
-  elevators = Elevators(4)
-  controller = RoundRobinAssigner()
+  cfg = {
+    'elevators': 4,
+    'floors': 6,
+    'horizon': 1000,
+    'controller': DedicatedAssigner,
+  }
 
-  e = Evolver(elevators, controller, horizon=1000)
+  elevators = Elevators(cfg)
+  controller = cfg['controller'](cfg)
+
+  e = Evolver(elevators, controller, cfg)
   e.evolve()
 
 

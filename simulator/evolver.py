@@ -1,36 +1,39 @@
 import random
 
-from simulator.elevator import NUM_FLOORS
 from simulator.env import Env
 from simulator.rider import Rider
 
 class Evolver(object):
-  def __init__(self, elevators, controller, horizon = 0):
-    self.horizon = horizon
+  def __init__(self, elevators, controller, cfg):
+    self._cfg = cfg
 
-    self.elevators = elevators
-    self.controller = controller
-    self.env = Env()
+    self._elevators = elevators
+    self._controller = controller
+    self._env = Env()
 
   def evolve(self):
+    horizon = self._cfg['horizon']
     try:
-      while self.horizon == 0 or self.env.timer < self.horizon:
+      while horizon == 0 or self._env.timer < horizon:
         # Pause for DEBUGGING
         # input('')
 
         # Random incoming rider.
-        rider = Rider(self.env, 0, random.choice(range(1, NUM_FLOORS)))
+        rider = Rider(self._env,
+                      0,
+                      random.choice(range(1, self._cfg['floors'])))
 
-        picked = self.controller.Pick(self.elevators.state(), rider)
-        self.elevators.commit(picked, rider)
+        picked = self._controller.Pick(self._elevators.state(), rider)
+        self._elevators.commit(picked, rider)
 
-        self.elevators.step()
+        self._elevators.step()
 
         # DEBUGGING
-        print(self.elevators)
+        print(self._elevators)
+        print()
 
-        self.env.tick()
+        self._env.tick()
     except KeyboardInterrupt:
       print('sim stopped!')
 
-    print(self.env.stats)
+    print(self._env.stats)
