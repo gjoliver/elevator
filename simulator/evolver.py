@@ -27,7 +27,7 @@ class Evolver(object):
         self.elevators.step()
 
         # DEBUGGING
-        # print(self.elevators)
+        print(self.elevators)
 
         self.env.tick()
     except KeyboardInterrupt:

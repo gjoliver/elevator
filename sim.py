@@ -1,10 +1,11 @@
+from controllers.rr import RoundRobinAssigner
 from controllers.random import RandomAssigner
 from simulator.elevator import Elevators
 from simulator.evolver import Evolver
 
 def sim():
   elevators = Elevators(4)
-  controller = RandomAssigner()
+  controller = RoundRobinAssigner()
 
   e = Evolver(elevators, controller, horizon=1000)
   e.evolve()
