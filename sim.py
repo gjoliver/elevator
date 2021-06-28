@@ -4,8 +4,19 @@ from simulator.evolver import EvolverConfig, Evolver
 
 
 def sim():
-  e = Evolver(EvolverConfig())
-  e.evolve()
+  cfg = EvolverConfig()
+  e = Evolver(cfg)
+
+  try:
+    while e.time() < cfg.horizon:
+      # Pause for DEBUGGING
+      # input('')
+
+      e.step()
+  except KeyboardInterrupt:
+    print('sim stopped!')
+
+  print(e.stats())
 
 
 if __name__ == '__main__':

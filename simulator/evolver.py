@@ -30,29 +30,25 @@ class Evolver(object):
     self._controller = cfg.controller
     self._env = Env()
 
-  def evolve(self):
-    horizon = self._cfg.horizon
-    try:
-      while horizon == 0 or self._env.timer < horizon:
-        # Pause for DEBUGGING
-        # input('')
+  def time(self):
+    # Get universe time.
+    return self._env.timer
 
-        # Random incoming rider.
-        rider = Rider(self._env,
-                      0,
-                      random.choice(range(1, self._cfg.num_floors)))
+  def stats(self):
+    return self._env.stats
 
-        picked = self._controller.Pick(self._elevators.state(), rider)
-        self._elevators.commit(picked, rider)
+  def step(self):
+    # Random incoming rider.
+    rider = Rider(self._env,
+                  0,
+                  random.choice(range(1, self._cfg.num_floors)))
 
-        self._elevators.step()
+    picked = self._controller.Pick(self._elevators.state(), rider)
+    self._elevators.commit(picked, rider)
+    self._elevators.step()
 
-        # DEBUGGING
-        print(self._elevators)
-        print()
+    # DEBUGGING
+    print(self._elevators)
+    print()
 
-        self._env.tick()
-    except KeyboardInterrupt:
-      print('sim stopped!')
-
-    print(self._env.stats)
+    self._env.tick()
