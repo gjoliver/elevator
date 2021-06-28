@@ -10,8 +10,8 @@ class S(Enum):
 
 
 class Elevator(object):
-  def __init__(self, cfg):
-    self._cfg = cfg
+  def __init__(self, num_floors):
+    self._num_floors = num_floors
 
     self.running = S.STOP
     self.floor = 0    # Current floor.
@@ -25,7 +25,7 @@ class Elevator(object):
     # corresponding pick up stops are satisfied.
     self.stops = []
     # Riders waiting for this elevator at each floor.
-    self.waiting = [[] for _ in range(self._cfg['floors'])]
+    self.waiting = [[] for _ in range(num_floors)]
 
   def _consolidate_stops(self):
     self.stops = list(set(self.stops))
@@ -74,7 +74,7 @@ class Elevator(object):
     if self.running == S.STOP:
       pass
     elif self.running == S.UP:
-      assert self.floor < self._cfg['floors'] - 1, 'already at top'
+      assert self.floor < self._num_floors - 1, 'already at top'
       self.floor += 1
     elif self.running == S.DOWN:
       assert self.floor > 0, 'already at ground floor'
@@ -165,8 +165,8 @@ class Elevator(object):
 
 
 class Elevators(object):
-  def __init__(self, cfg):
-    self.elevators = [Elevator(cfg) for _ in range(cfg['elevators'])]
+  def __init__(self, num_elevators=4, num_floors=6):
+    self.elevators = [Elevator(num_floors) for _ in range(num_elevators)]
 
   def state(self):
     return [e.state() for e in self.elevators]

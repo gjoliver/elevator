@@ -1,6 +1,5 @@
 class RoundRobinAssigner(object):
-  def __init__(self, cfg):
-    del cfg  # not used
+  def __init__(self):
     self.choice = 0
 
   def Pick(self, state, rider):
