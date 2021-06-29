@@ -37,6 +37,9 @@ class Evolver(object):
   def stats(self):
     return self._env.stats
 
+  def state(self):
+    return self._elevators.state()
+
   def step(self):
     # Random incoming rider.
     rider = Rider(self._env,
@@ -48,7 +51,6 @@ class Evolver(object):
     self._elevators.step()
 
     # DEBUGGING
-    print(self._elevators)
-    print()
+    # print(self._elevators)
 
     self._env.tick()
