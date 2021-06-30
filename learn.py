@@ -47,7 +47,7 @@ def main():
 
   for _ in range(ITERATION):
     sims = [s.Simulate.remote() for s in simulators]
-    ray.wait(sims)
+    ray.wait(sims, num_returns=len(sims))
 
     num_episodes = rb.Size.remote()
     print(ray.get(num_episodes))

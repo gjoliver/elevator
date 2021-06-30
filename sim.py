@@ -1,4 +1,4 @@
-from controllers.random import RandomAssigner
+from controllers.rand import RandomAssigner
 from controllers.rr import RoundRobinAssigner
 from simulator.evolver import EvolverConfig, Evolver
 
