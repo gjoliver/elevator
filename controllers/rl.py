@@ -8,8 +8,9 @@ def FVElevator(e, num_floors):
   floor_fv = jax.nn.one_hot(e['floor'], num_floors)
   stops_fv = [0.0 for _ in range(num_floors)]
   for s in e['stops']:
-    # s[0] is the immediate committed stop for a rider.
-    stops_fv[s[0]] = 1.0
+    # s may include 2 stops, pickup, then dropoff floors.
+    for sp in s:
+      stops_fv[sp] = 1.0
   stops_fv = jnp.array(stops_fv)
   return jnp.hstack([running_fv, floor_fv, stops_fv])
 
