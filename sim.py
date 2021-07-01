@@ -1,10 +1,17 @@
 from controllers.rand import RandomAssigner
+from controllers.rl import RLAssigner
 from controllers.rr import RoundRobinAssigner
 from simulator.evolver import EvolverConfig, Evolver
 
 
+NUM_ELEVATORS = 4
+NUM_FLOORS = 6
+
 def sim():
-  cfg = EvolverConfig()
+  cfg = EvolverConfig(num_elevators=NUM_ELEVATORS,
+                      num_floors=NUM_FLOORS,
+                      controller=RLAssigner(NUM_ELEVATORS,
+                                            NUM_FLOORS))
   e = Evolver(cfg)
 
   try:
