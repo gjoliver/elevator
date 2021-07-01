@@ -3,43 +3,47 @@ import jax.numpy as jnp
 import random
 import unittest
 
-from agents import RLParams, DQNPureJax
+from agents import AgentParams, DQNPureJax
 
 class TestDQNPureJax(unittest.TestCase):
   def test_action(self):
-    params = RLParams(nn_sizes=[20, 100, 100, 3],
-                      gamma=0.9,
-                      lr=0.01)
+    params = AgentParams(nn_sizes=[20, 100, 100, 3],
+                         gamma=0.9,
+                         lr=0.01)
     # NN
     n = DQNPureJax(params)
     # Random key.
     key = jax.random.PRNGKey(random.randint(0, 88))
     # Run FV.
-    fv = jax.random.normal(key, (20,))
+    fvs = jax.random.normal(key, (10, 20))
     # Get action
-    action = n.Action(fv)
+    actions = n.Action(fvs)
 
-    self.assertTrue(action in (0, 1, 2))
+    self.assertEqual(len(actions), 10)
+    for action in actions:
+      self.assertTrue(action in (0, 1, 2))
 
   def test_train(self):
-    params = RLParams(nn_sizes=[2, 5, 5, 3],
-                      gamma=0.9,
-                      lr=0.00001)
+    params = AgentParams(nn_sizes=[2, 5, 5, 3],
+                         gamma=0.9,
+                         lr=0.001)
     # NN
     n = DQNPureJax(params)
 
+    # Random key.
+    key = jax.random.PRNGKey(random.randint(0, 88))
     # Train input.
-    fv = jnp.array([1.0, 2.0])
-    next_fv = jnp.array([3.0, 4.0])
-    action = 1
-    reward = 8.0
+    fvs = jax.random.normal(key, (10, 2))
+    next_fvs = jax.random.normal(key, (10, 2))
+    actions = jnp.array([random.choice([0, 1, 2]) for _ in range(10)])
+    rewards = jnp.array([random.uniform(0, 10.0) for _ in range(10)])
 
-    loss1 = n.TrainStep(fv, action, reward, next_fv)
-    # Train another 2 steps with the same data frame.
-    loss2 = n.TrainStep(fv, action, reward, next_fv)
-    loss3 = n.TrainStep(fv, action, reward, next_fv)
+    loss1 = n.TrainStep(fvs, actions, rewards, next_fvs)
+    # Train another 2 steps with the same data frames.
+    loss2 = n.TrainStep(fvs, actions, rewards, next_fvs)
+    loss3 = n.TrainStep(fvs, actions, rewards, next_fvs)
 
-    # Loss should keep getting reduced.
+    # Loss should keep getting smaller.
     self.assertTrue(loss2 < loss1)
     self.assertTrue(loss3 < loss2)
 

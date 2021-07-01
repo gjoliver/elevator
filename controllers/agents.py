@@ -2,7 +2,7 @@ import jax
 import jax.numpy as jnp
 
 
-class RLParams(object):
+class AgentParams(object):
   def __init__(self, nn_sizes, gamma, lr):
     self.nn_sizes = nn_sizes
     self.gamma = gamma
@@ -35,6 +35,7 @@ class DQNPureJax(object):
     x = fv
     for w, b in model[:-1]:
       x = jnp.dot(w, x) + b
+      # Hidden layers have Relu activation.
       x = relu(x)
 
     w, b = model[-1]
@@ -42,18 +43,22 @@ class DQNPureJax(object):
 
     return logits
 
-  def Action(self, fv):
-    return jnp.argmax(self._forward(self._model, fv))
+  def Action(self, fvs):
+    action = lambda fv: jnp.argmax(self._forward(self._model, fv))
+    return jax.vmap(action)(fvs)
 
-  def TrainStep(self, fv, action, reward, next_fv):
+  def TrainStep(self, fvs, actions, rewards, next_fvs):
     gamma = self._params.gamma
 
     def loss_fn(model):
-      q = self._forward(model, fv)[action]
-      max_next_q = jnp.max(self._forward(model, next_fv))
-      target = reward + gamma * max_next_q
+      q_fn = jax.vmap(lambda fv: self._forward(model, fv))
+      qs = q_fn(fvs)
+      one_hot = jax.vmap(lambda q, action: q[action])
+      selected_qs = one_hot(qs, actions)
+      max_next_qs = jnp.max(q_fn(next_fvs), axis=1)
+      targets = rewards + gamma * max_next_qs
       # MSE loss.
-      return jnp.power((target - q), 2)
+      return jnp.mean(jnp.power((targets - selected_qs), 2))
 
     grad_fn = jax.value_and_grad(loss_fn)
     loss, grad = grad_fn(self._model)
