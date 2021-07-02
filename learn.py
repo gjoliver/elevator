@@ -1,5 +1,6 @@
 from collections import deque
 import jax.numpy as jnp
+import random
 import ray
 
 from controllers.agents import AgentParams, DQNPureJax
@@ -30,7 +31,7 @@ class Simulator(object):
     evolver = Evolver(self._cfg)
     while evolver.time() < self._cfg.horizon:
       rider, state, action, reward = evolver.step()
-      episode.append((rider, state, action, reward))
+      episode.append([rider, state, action, reward])
 
     # Synchronously add the episode.
     # Not really necessary once we make all the jobs work asynchronously.
@@ -50,7 +51,7 @@ class ReplayBuffer(object):
   def AddEpisode(self, episode):
     # Compute reward + future discounted reward.
     f_reward = 0
-    for i in reverse(range(len(episode))):
+    for i in reversed(range(len(episode))):
       _, _, _, reward = episode[i]
       d_reward = reward + self._gamma * f_reward
       episode[i][3] = d_reward
@@ -60,12 +61,12 @@ class ReplayBuffer(object):
     # batch size for now, assuming that there are only 2 simulators.
     # TODO(jungong) : fix it.
     selected = random.choices(
-      range(len(episode) - 1), k=self._batch_size / 2)
+      range(len(episode) - 1), k=int(self._batch_size / 2))
     for i in selected:
       rider, state, action, reward = episode[i]
-      fv = FV(state, rider, self._num_floor)
+      fv = FV(state, rider, self._num_floors)
       next_rider, next_state, _, _ = episode[i + 1]
-      next_fv = FV(next_state, next_rider, self._num_floor)
+      next_fv = FV(next_state, next_rider, self._num_floors)
       # Add 1 frame.
       self._queue.append([fv, action, reward, next_fv])
 
@@ -90,7 +91,7 @@ class Trainer(object):
     self._agent = DQNPureJax(agent_params)
 
   def Step(self):
-    self._agent.TrainStep(*ray.get(self._rb.GetFrames.remote()))
+    return self._agent.TrainStep(*ray.get(self._rb.GetFrames.remote()))
 
 
 def main():
@@ -98,7 +99,8 @@ def main():
 
   rb = ReplayBuffer.remote()
 
-  evolver_cfg = EvolverConfig(num_elevators=NUM_ELEVATORS,
+  evolver_cfg = EvolverConfig(horizon=200,
+                              num_elevators=NUM_ELEVATORS,
                               num_floors=NUM_FLOORS,
                               controller=RLAssigner(NUM_ELEVATORS,
                                                     NUM_FLOORS))
@@ -108,13 +110,13 @@ def main():
   trainer = Trainer.remote(rb)
 
   for i in range(ITERATION):
-    print(f'iteration {i}')
-
     sims = [s.Simulate.remote() for s in simulators]
-    # TODO, these should all be asynchronous.
+    # TODO(jungong), Sims should be asynchronous.
     ray.wait(sims, num_returns=len(sims))
 
-    trainer.Step.remote()
+    loss = ray.get([trainer.Step.remote()])
+
+    print(f'iteration {i}, loss {loss}')
 
 
 if __name__ == '__main__':
