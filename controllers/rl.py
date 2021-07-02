@@ -26,9 +26,14 @@ def FV(state, rider, num_floors):
                          axis=0)
 
 
+def NumFeatures(num_floors, num_elevators):
+  # Note: this must match FV(...) above.
+  return num_floors + num_elevators * (3 + num_floors + num_floors)
+
+
 class RLAssigner(object):
   def __init__(self, num_elevators, num_floors,  agent=None):
-    num_features = num_floors + num_elevators * (3 + num_floors + num_floors)
+    num_features = NumFeatures(num_floors, num_elevators)
     if not agent:
       params = AgentParams(nn_sizes=[num_features, 30, 30, num_elevators],
                            gamma=0.9,

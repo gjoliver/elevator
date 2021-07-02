@@ -37,20 +37,25 @@ class Evolver(object):
   def stats(self):
     return self._env.stats
 
-  def state(self):
-    return self._elevators.state()
-
   def step(self):
-    # Random incoming rider.
-    rider = Rider(self._env,
-                  0,
-                  random.choice(range(1, self._cfg.num_floors)))
+    # New rider
+    rider = Rider(
+      self._env, 0, random.choice(range(1, self._cfg.num_floors)))
 
-    picked = self._controller.Pick(self._elevators.state(), rider)
-    self._elevators.commit(picked, rider)
+    state = self._elevators.state()
+
+    action = self._controller.Pick(state, rider)
+    # Once we know which elevator is going to pick up the rider,
+    # reward becomes simple. For every floor that this rider has
+    # to wait, we reward -1 to encourage fast overal pickup time.
+    reward = -abs(rider.pickup - state[action]['floor'])
+
+    self._elevators.commit(action, rider)
     self._elevators.step()
 
     # DEBUGGING
     # print(self._elevators)
 
     self._env.tick()
+
+    return rider, state, action, reward

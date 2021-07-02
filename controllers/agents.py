@@ -1,5 +1,6 @@
 import jax
 import jax.numpy as jnp
+import random
 
 
 class AgentParams(object):
@@ -14,7 +15,8 @@ class DQNPureJax(object):
     nn_sizes = params.nn_sizes
 
     # Simple sequential.
-    keys = jax.random.split(jax.random.PRNGKey(0), len(nn_sizes))
+    keys = jax.random.split(jax.random.PRNGKey(random.randint(0, 10000)),
+                            len(nn_sizes))
 
     def layer(in_dim, out_dim, key):
       w_key, b_key = jax.random.split(key)
