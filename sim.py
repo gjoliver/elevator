@@ -1,17 +1,18 @@
 from controllers.rand import RandomAssigner
-from controllers.rl import RLAssigner
+from controllers.rl import NumFeatures, RLAssigner
 from controllers.rr import RoundRobinAssigner
 from simulator.evolver import EvolverConfig, Evolver
+from utils.hyper_params import HyperParams
 
-
-NUM_ELEVATORS = 4
-NUM_FLOORS = 6
 
 def sim():
-  cfg = EvolverConfig(num_elevators=NUM_ELEVATORS,
-                      num_floors=NUM_FLOORS,
-                      controller=RLAssigner(NUM_ELEVATORS,
-                                            NUM_FLOORS))
+  hparams = HyperParams()
+  hparams.nn_sizes = [NumFeatures(hparams.num_floors, hparams.num_elevators),
+                      30, 30,
+                      hparams.num_elevators]
+  cfg = EvolverConfig(hparams=hparams,
+                      horizon=1000,
+                      controller=RLAssigner(hparams))
   e = Evolver(cfg)
 
   try:

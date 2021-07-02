@@ -3,24 +3,15 @@ import jax.numpy as jnp
 import random
 import ray
 
-from controllers.agents import AgentParams, DQNPureJax
+from controllers.agents import DQNPureJax
 from controllers.rl import FV, NumFeatures, RLAssigner
 from simulator.evolver import EvolverConfig, Evolver
-
-# Hyper-parameters.
-# TODO(jungong): make this into a struct
-ITERATION = 10
-NUM_ELEVATORS = 4
-NUM_FLOORS = 6
-BATCH_SIZE=128
-NN_SIZES = [NumFeatures(NUM_FLOORS, NUM_ELEVATORS), 100, 100, NUM_ELEVATORS]
-GAMMA = 0.9
-LEARNING_RATE = 0.001
+from utils.hyper_params import HyperParams
 
 
 @ray.remote
 class Simulator(object):
-  def __init__(self, replica, rb, cfg=EvolverConfig()):
+  def __init__(self, replica, rb, cfg):
     self._replica = replica
     self._count = 0
     self._rb = rb
@@ -41,19 +32,18 @@ class Simulator(object):
 
 @ray.remote
 class ReplayBuffer(object):
-  # Small replay buffer. Basically doing on-policy training for now.
-  def __init__(self, size=BATCH_SIZE, gamma=GAMMA, num_floors=NUM_FLOORS):
-    self._queue = deque(maxlen=size)
-    self._batch_size = size
-    self._gamma = gamma
-    self._num_floors = num_floors
+  def __init__(self, hparams):
+    # Small replay buffer. Same size as batch_size.
+    # Basically doing on-policy training for now.
+    self._queue = deque(maxlen=hparams.batch_size)
+    self._hparams = hparams
 
   def AddEpisode(self, episode):
     # Compute reward + future discounted reward.
     f_reward = 0
     for i in reversed(range(len(episode))):
       _, _, _, reward = episode[i]
-      d_reward = reward + self._gamma * f_reward
+      d_reward = reward + self._hparams.gamma * f_reward
       episode[i][3] = d_reward
       f_reward = d_reward
 
@@ -61,12 +51,12 @@ class ReplayBuffer(object):
     # batch size for now, assuming that there are only 2 simulators.
     # TODO(jungong) : fix it.
     selected = random.choices(
-      range(len(episode) - 1), k=int(self._batch_size / 2))
+      range(len(episode) - 1), k=int(self._hparams.batch_size / 2))
     for i in selected:
       rider, state, action, reward = episode[i]
-      fv = FV(state, rider, self._num_floors)
+      fv = FV(state, rider, self._hparams.num_floors)
       next_rider, next_state, _, _ = episode[i + 1]
-      next_fv = FV(next_state, next_rider, self._num_floors)
+      next_fv = FV(next_state, next_rider, self._hparams.num_floors)
       # Add 1 frame.
       self._queue.append([fv, action, reward, next_fv])
 
@@ -83,12 +73,9 @@ class ReplayBuffer(object):
 
 @ray.remote
 class Trainer(object):
-  def __init__(self, rb):
+  def __init__(self, hparams, rb):
     self._rb = rb
-    agent_params = AgentParams(nn_sizes=NN_SIZES,
-                               gamma=GAMMA,
-                               lr=LEARNING_RATE)
-    self._agent = DQNPureJax(agent_params)
+    self._agent = DQNPureJax(hparams)
 
   def Step(self):
     return self._agent.TrainStep(*ray.get(self._rb.GetFrames.remote()))
@@ -97,19 +84,23 @@ class Trainer(object):
 def main():
   ray.init(dashboard_host="127.0.0.1")
 
-  rb = ReplayBuffer.remote()
+  # Note, widths of the input/output layers should match the
+  # number of elevators and floors.
+  hparams = HyperParams(nn_sizes=[NumFeatures(6, 4), 100, 100, 4],
+                        num_elevators=4,
+                        num_floors=6)
 
-  evolver_cfg = EvolverConfig(horizon=200,
-                              num_elevators=NUM_ELEVATORS,
-                              num_floors=NUM_FLOORS,
-                              controller=RLAssigner(NUM_ELEVATORS,
-                                                    NUM_FLOORS))
+  rb = ReplayBuffer.remote(hparams)
+
+  evolver_cfg = EvolverConfig(hparams=hparams,
+                              horizon=200,
+                              controller=RLAssigner(hparams))
   simulators = [Simulator.remote(i, rb, cfg=evolver_cfg)
                 for i in range(2)]
 
-  trainer = Trainer.remote(rb)
+  trainer = Trainer.remote(hparams, rb)
 
-  for i in range(ITERATION):
+  for i in range(hparams.training_iterations):
     sims = [s.Simulate.remote() for s in simulators]
     # TODO(jungong), Sims should be asynchronous.
     ray.wait(sims, num_returns=len(sims))

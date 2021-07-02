@@ -3,16 +3,9 @@ import jax.numpy as jnp
 import random
 
 
-class AgentParams(object):
-  def __init__(self, nn_sizes, gamma, lr):
-    self.nn_sizes = nn_sizes
-    self.gamma = gamma
-    self.lr = lr
-
-
 class DQNPureJax(object):
-  def __init__(self, params):
-    nn_sizes = params.nn_sizes
+  def __init__(self, hparams):
+    nn_sizes = hparams.nn_sizes
 
     # Simple sequential.
     keys = jax.random.split(jax.random.PRNGKey(random.randint(0, 10000)),
@@ -27,7 +20,7 @@ class DQNPureJax(object):
                    for in_dim, out_dim, key
                    in zip(nn_sizes[:-1], nn_sizes[1:], keys)]
 
-    self._params = params
+    self._hparams = hparams
 
   @staticmethod
   def _forward(model, fv):
@@ -50,7 +43,7 @@ class DQNPureJax(object):
     return jax.vmap(action)(fvs)
 
   def TrainStep(self, fvs, actions, rewards, next_fvs):
-    gamma = self._params.gamma
+    gamma = self._hparams.gamma
 
     def loss_fn(model):
       q_fn = jax.vmap(lambda fv: self._forward(model, fv))
@@ -66,7 +59,7 @@ class DQNPureJax(object):
     loss, grad = grad_fn(self._model)
 
     # Apply gradient.
-    lr = self._params.lr
+    lr = self._hparams.learning_rate
     for l, g in zip(self._model, grad):
       l[0] -= lr * g[0]  # Update W
       l[1] -= lr * g[1]  # Update b

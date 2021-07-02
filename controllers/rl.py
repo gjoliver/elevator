@@ -1,4 +1,4 @@
-from controllers.agents import AgentParams, DQNPureJax
+from controllers.agents import DQNPureJax
 import jax
 import jax.numpy as jnp
 
@@ -32,17 +32,16 @@ def NumFeatures(num_floors, num_elevators):
 
 
 class RLAssigner(object):
-  def __init__(self, num_elevators, num_floors,  agent=None):
-    num_features = NumFeatures(num_floors, num_elevators)
+  def __init__(self, hparams,  agent=None):
+    assert(hparams.nn_sizes or agent), (
+      'Must either specify the NN sizes or provide an agent when '
+      'initialize RLAssigner.')
     if not agent:
-      params = AgentParams(nn_sizes=[num_features, 30, 30, num_elevators],
-                           gamma=0.9,
-                           lr=0.001)
-      agent = DQNPureJax(params)
+      agent = DQNPureJax(hparams)
     self._agent = agent
-    self._num_floors = num_floors
+    self._hparams = hparams
 
   def Pick(self, state, rider):
-    fv = FV(state, rider, self._num_floors)
+    fv = FV(state, rider, self._hparams.num_floors)
     action = self._agent.Action(fv)
     return action[0]
