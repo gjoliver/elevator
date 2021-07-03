@@ -89,6 +89,19 @@ class Trainer(object):
     return self._agent.TrainStep(*ray.get(self._rb.GetFrames.remote()))
 
 
+@ray.remote
+def Eval(hparams, agent_id):
+  cfg = EvolverConfig(hparams=hparams,
+                      horizon=1000,  # Eval horizon.
+                      controller=RLAssigner(hparams))
+  e = Evolver(cfg)
+  while e.time() < cfg.horizon:
+    e.step()
+
+  # Print intermediate eval results.
+  print(e.stats())
+
+
 def main():
   ray.init(dashboard_host="127.0.0.1")
 
@@ -120,6 +133,9 @@ def main():
     agent_id = trainer.SaveAgent.remote()
     ray.wait([s.UpdateController.remote(agent_id)
               for s in simulators])
+
+    # Eval after each iteration.
+    Eval.remote(hparams, agent_id)
 
     print(f'iteration {i}, loss {loss}')
 
