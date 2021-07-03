@@ -17,6 +17,11 @@ class Simulator(object):
     self._rb = rb
     self._cfg = cfg
 
+  def UpdateController(self, agent_id):
+    agent = ray.get(agent_id)
+    # Update controller, which will get used in next Simulate() call.
+    self._cfg.controller = RLAssigner(self._cfg.hparams, agent)
+
   def Simulate(self):
     episode = []
     evolver = Evolver(self._cfg)
@@ -77,6 +82,9 @@ class Trainer(object):
     self._rb = rb
     self._agent = DQNPureJax(hparams)
 
+  def SaveAgent(self):
+    return ray.put(self._agent)
+
   def Step(self):
     return self._agent.TrainStep(*ray.get(self._rb.GetFrames.remote()))
 
@@ -93,7 +101,7 @@ def main():
   rb = ReplayBuffer.remote(hparams)
 
   evolver_cfg = EvolverConfig(hparams=hparams,
-                              horizon=200,
+                              horizon=300,
                               controller=RLAssigner(hparams))
   simulators = [Simulator.remote(i, rb, cfg=evolver_cfg)
                 for i in range(2)]
@@ -105,7 +113,13 @@ def main():
     # TODO(jungong), Sims should be asynchronous.
     ray.wait(sims, num_returns=len(sims))
 
+    # One training step.
     loss = ray.get([trainer.Step.remote()])
+
+    # Broadcast current agent NN to all the simulators.
+    agent_id = trainer.SaveAgent.remote()
+    ray.wait([s.UpdateController.remote(agent_id)
+              for s in simulators])
 
     print(f'iteration {i}, loss {loss}')
 

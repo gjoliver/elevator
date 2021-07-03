@@ -8,7 +8,7 @@ class HyperParams(object):
                training_iterations=10,
                batch_size=128,
                gamma=0.9,
-               learning_rate=0.001):
+               learning_rate=0.00001):
     self.nn_sizes = nn_sizes
     self.num_elevators = num_elevators
     self.num_floors = num_floors
