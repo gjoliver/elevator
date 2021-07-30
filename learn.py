@@ -103,7 +103,7 @@ def Eval(hparams, agent_id):
 
 
 def main():
-  ray.init(dashboard_host="127.0.0.1")
+  ray.init(address='auto')
 
   # Note, widths of the input/output layers should match the
   # number of elevators and floors.
