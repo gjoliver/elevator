@@ -44,4 +44,4 @@ class RLAssigner(object):
   def Pick(self, state, rider):
     fv = FV(state, rider, self._hparams.num_floors)
     action = self._agent.Action(fv)
-    return action[0]
+    return int(action[0])

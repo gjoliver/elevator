@@ -20,7 +20,7 @@ class Evolver(object):
     self._elevators = Elevators(num_elevators=cfg.hparams.num_elevators,
                                 num_floors=cfg.hparams.num_floors)
     self._controller = cfg.controller
-    self._env = Env()
+    self._env = Env(cfg)
 
   def time(self):
     # Get universe time.
@@ -37,6 +37,9 @@ class Evolver(object):
     state = self._elevators.state()
 
     action = self._controller.Pick(state, rider)
+    # Update action distribution.
+    self._env.stats.action_count[action] += 1
+
     # Once we know which elevator is going to pick up the rider,
     # reward becomes simple. For every floor that this rider has
     # to wait, we reward -1 to encourage fast overal pickup time.
