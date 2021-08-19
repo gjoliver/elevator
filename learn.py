@@ -103,7 +103,7 @@ def Eval(hparams, agent_id):
 
 
 def main():
-  ray.init(address='auto')
+  ray.init()
 
   # Note, widths of the input/output layers should match the
   # number of elevators and floors.
